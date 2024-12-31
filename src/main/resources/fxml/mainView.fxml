@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+
+<BorderPane fx:id="mainPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="450.0" prefWidth="947.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <center>
+      <HBox alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="308.0" prefWidth="601.0" style="-fx-background-color: a3a5ab;" BorderPane.alignment="CENTER">
+         <children>
+            <ImageView fitHeight="172.0" fitWidth="317.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@images/8739b5a77f602160b52a53b78b00d1d3.png" />
+               </image>
+            </ImageView>
+         </children>
+      </HBox>
+   </center>
+   <bottom>
+      <HBox alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="110.0" prefWidth="600.0" spacing="15.0" style="-fx-background-color: black;" BorderPane.alignment="CENTER">
+         <children>
+            <Button fx:id="buttonPractica" mnemonicParsing="false" onAction="#onButtonPracticaAction" prefHeight="85.0" prefWidth="110.0">
+               <graphic>
+                  <ImageView fitHeight="76.0" fitWidth="102.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@images/practicas.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+               <HBox.margin>
+                  <Insets />
+               </HBox.margin>
+            </Button>
+            <Button fx:id="buttonVisitaSeguimiento" mnemonicParsing="false" onAction="#onButtonVisitaSeguimiento" prefHeight="86.0" prefWidth="110.0">
+               <graphic>
+                  <ImageView fitHeight="76.0" fitWidth="102.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@images/marcador-de-posicion.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+               <HBox.margin>
+                  <Insets />
+               </HBox.margin>
+            </Button>
+            <Button fx:id="buttonComentarioEmpresa" mnemonicParsing="false" onAction="#onButtonComentarioEmpresaAction" prefHeight="87.0" prefWidth="110.0">
+               <graphic>
+                  <ImageView fitHeight="76.0" fitWidth="102.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@images/comentario.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+               <HBox.margin>
+                  <Insets />
+               </HBox.margin>
+            </Button>
+            <Button fx:id="buttonAlumno" mnemonicParsing="false" onAction="#onButtonAlumnoAction" prefHeight="87.0" prefWidth="110.0">
+               <graphic>
+                  <ImageView fitHeight="76.0" fitWidth="102.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@images/7941558.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+               <HBox.margin>
+                  <Insets />
+               </HBox.margin>
+            </Button>
+            <Button fx:id="buttonEmpresa" mnemonicParsing="false" onAction="#onButtonEmpresaAction" prefHeight="86.0" prefWidth="110.0">
+               <graphic>
+                  <ImageView fitHeight="76.0" fitWidth="93.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@images/vision-de-la-empresa.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+               <HBox.margin>
+                  <Insets />
+               </HBox.margin>
+            </Button>
+         </children>
+      </HBox>
+   </bottom>
+</BorderPane>
