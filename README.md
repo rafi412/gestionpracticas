@@ -1,2 +1,4 @@
 # gestionpracticas
- Gestión de Prácticas en Java 
+ Gestión de Prácticas en JavaFX
+
+ 
