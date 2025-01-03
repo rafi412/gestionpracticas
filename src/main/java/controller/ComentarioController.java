@@ -1,6 +1,7 @@
 package controller;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -99,6 +100,7 @@ public class ComentarioController {
 
         comentariosList = FXCollections.observableArrayList();
         empresasList = FXCollections.observableArrayList();
+        tablaComentarioTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         cargarDatosComentarios();
         cargarDatosEmpresas();
@@ -108,17 +110,19 @@ public class ComentarioController {
 
         agregarListenerCampoIdComentario();
 
-        tablaComentarioTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (newSelection != null) {
-                llenarCampos(newSelection);
-                idComentarioField.setEditable(false);
-            }
-        });
+        tablaComentarioTable.getSelectionModel().selectedItemProperty()
+                .addListener((obs, oldSelection, newSelection) -> {
+                    if (newSelection != null) {
+                        llenarCampos(newSelection);
+                        idComentarioField.setEditable(false);
+                    }
+                });
 
         idComentarioField.textProperty().addListener((observable, oldValue, newValue) -> {
             insertButton.setDisable(!newValue.isEmpty());
         });
 
+        // Limpiar selección de la tabla al hacer clic en cualquier parte del BorderPane
         comentarioBorderPane.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
             boolean esNodoDeEdicion = idComentarioField.isHover() ||
                     idEmpresaComboBox.isHover() ||
@@ -127,9 +131,12 @@ public class ComentarioController {
 
             if (!tablaComentarioTable.isHover() && !esNodoDeEdicion) {
                 tablaComentarioTable.getSelectionModel().clearSelection();
-
             }
         });
+
+        if(tablaComentarioTable.getSelectionModel().getSelectedItems().size() > 1) {
+            editarButton.setDisable(true);
+        }
 
     }
 
@@ -165,7 +172,7 @@ public class ComentarioController {
 
         String query = "INSERT INTO comentario_empresa (ID_Empresa, Fecha_Comentario, Nota) VALUES (?, ?, ?)";
         try (Connection connection = HikariCPConexion.getConnection();
-             var preparedStatement = connection.prepareStatement(query)) {
+                var preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setInt(1, idEmpresa);
             preparedStatement.setString(2, fechaComentario);
@@ -173,7 +180,8 @@ public class ComentarioController {
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected > 0) {
-                mostrarAlerta("Éxito", "Comentario insertado correctamente", AlertType.INFORMATION);;
+                mostrarAlerta("Éxito", "Comentario insertado correctamente", AlertType.INFORMATION);
+                ;
                 comentariosList.clear();
                 cargarDatosComentarios();
             } else {
@@ -189,25 +197,25 @@ public class ComentarioController {
     @FXML
     void updateButton(ActionEvent event) {
         int idComentario;
-        try{
+        try {
             idComentario = Integer.parseInt(idComentarioField.getText());
-        } catch(NumberFormatException e){
+        } catch (NumberFormatException e) {
             mostrarAlerta("Error", "ID de comentario no es un número válido.", Alert.AlertType.ERROR);
             return;
         }
 
-
-
         String idEmpresa = idEmpresaComboBox.getValue();
-        String fechaComentario = fechaComentarioDatePicker.getValue() != null ? fechaComentarioDatePicker.getValue().toString() : null;
+        String fechaComentario = fechaComentarioDatePicker.getValue() != null
+                ? fechaComentarioDatePicker.getValue().toString()
+                : null;
         String nota = notaField.getText();
 
-        String empresaID =idEmpresa.split(" - ")[0];
+        String empresaID = idEmpresa.split(" - ")[0];
 
         String query = "UPDATE comentario_empresa SET ID_Empresa = ?, Fecha_Comentario = ?, Nota = ? WHERE ID_Comentario = ? ";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setString(1, empresaID);
             preparedStatement.setString(2, fechaComentario);
@@ -236,19 +244,19 @@ public class ComentarioController {
 
     @FXML
     void deleteButton(ActionEvent event) {
-        Comentario comentarioSeleccionado = tablaComentarioTable.getSelectionModel().getSelectedItem();
+        ObservableList<Comentario> seleccionados = FXCollections.observableArrayList(
+                tablaComentarioTable.getSelectionModel().getSelectedItems());
 
-        if (comentarioSeleccionado == null) {
-            mostrarAlerta("Error", "Selecciona un comentario para eliminar", Alert.AlertType.ERROR);
+        if (seleccionados.isEmpty()) {
+            mostrarAlerta("Error", "Por favor, selecciona uno o más comentarios para eliminar.", Alert.AlertType.ERROR);
             return;
         }
 
-        int idEliminar = comentarioSeleccionado.getIdComentario();
-
+        // Confirmación de eliminación
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Confirmar eliminación");
         confirmacion.setHeaderText(null);
-        confirmacion.setContentText("Estas seguro de que deseas eliminar el comentario con ID " + idEliminar + "?");
+        confirmacion.setContentText("¿Estás seguro de que deseas eliminar los comentarios seleccionados?");
 
         if (confirmacion.showAndWait().get() != ButtonType.OK) {
             return;
@@ -257,25 +265,24 @@ public class ComentarioController {
         String query = "DELETE FROM comentario_empresa WHERE ID_Comentario = ?";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-            preparedStatement.setInt(1, idEliminar);
-            int rowsDeleted = preparedStatement.executeUpdate();
-
-            if (rowsDeleted > 0) {
-                comentariosList.remove(comentarioSeleccionado);
-                tablaComentarioTable.getSelectionModel().clearSelection();
-                limpiarCampos();
-                mostrarAlerta("Éxito", "Comentario eliminada correctamente.", Alert.AlertType.INFORMATION);
-
-            } else {
-                mostrarAlerta("Error", "No se pudo eliminar el comentario. Por favor, inténtalo de nuevo.", Alert.AlertType.ERROR);
+            for (Comentario comentario : seleccionados) {
+                preparedStatement.setInt(1, comentario.getIdComentario());
+                preparedStatement.executeUpdate();
             }
 
-        } catch (SQLException e) {
-            mostrarAlerta("Error", "Error al eliminar la práctica: " + e.getMessage(), Alert.AlertType.ERROR);
-        }
+            // Eliminar elementos seleccionados de la lista de datos
+            comentariosList.removeAll(seleccionados);
 
+            // Limpiar la selección
+            tablaComentarioTable.getSelectionModel().clearSelection();
+            limpiarCampos();
+            mostrarAlerta("Éxito", "Comentarios eliminados correctamente.", Alert.AlertType.INFORMATION);
+
+        } catch (SQLException e) {
+            mostrarAlerta("Error", "Error al eliminar los comentarios: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
     }
 
     @FXML
@@ -304,12 +311,13 @@ public class ComentarioController {
         limpiarCampos();
     }
 
-    private void agregarListenerCampoIdComentario () {
+    private void agregarListenerCampoIdComentario() {
         idComentarioField.textProperty().addListener((observable, oldValue, newValue) -> {
             insertButton.setDisable(newValue != null && !newValue.trim().isEmpty());
         });
 
-        idComentarioField.setDisable(idComentarioField.getText() != null && !idComentarioField.getText().trim().isEmpty());
+        idComentarioField
+                .setDisable(idComentarioField.getText() != null && !idComentarioField.getText().trim().isEmpty());
     }
 
     private void limpiarCampos() {
@@ -324,16 +332,15 @@ public class ComentarioController {
         String query = "SELECT * FROM comentario_empresa";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(query)) {
 
             while (resultSet.next()) {
                 Comentario comentario = new Comentario(
                         resultSet.getInt("ID_Comentario"),
                         resultSet.getInt("ID_Empresa"),
                         resultSet.getString("Fecha_Comentario"),
-                        resultSet.getString("Nota")
-                );
+                        resultSet.getString("Nota"));
                 comentariosList.add(comentario);
             }
         } catch (SQLException e) {
@@ -366,8 +373,8 @@ public class ComentarioController {
         String query = "SELECT ID_Empresa, Nombre FROM empresa";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(query)) {
 
             while (resultSet.next()) {
                 String empresa = resultSet.getInt("ID_Empresa") + " - " + resultSet.getString("Nombre");
