@@ -1,5 +1,7 @@
 package controller;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -17,6 +19,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import main.HikariCPConexion;
 import model.Comentario;
+import model.Practica;
 
 import java.io.IOException;
 import java.sql.*;
@@ -134,9 +137,14 @@ public class ComentarioController {
             }
         });
 
-        if(tablaComentarioTable.getSelectionModel().getSelectedItems().size() > 1) {
-            editarButton.setDisable(true);
-        }
+        tablaComentarioTable.getSelectionModel().getSelectedItems().addListener((ListChangeListener<Comentario>) change -> {
+            // Verificar si hay más de un elemento seleccionado
+            if (tablaComentarioTable.getSelectionModel().getSelectedItems().size() > 1) {
+                editarButton.setDisable(true);  // Desactivar el botón Editar si hay más de un elemento seleccionado
+            } else {
+                editarButton.setDisable(false); // Habilitar el botón Editar si solo hay un elemento seleccionado
+            }
+        });
 
     }
 
