@@ -66,6 +66,9 @@ public class PracticaController {
     private Button insertarButton;
 
     @FXML
+    private Button editarButton;
+
+    @FXML
     private Button cancelarButton;
 
     @FXML
@@ -107,6 +110,7 @@ public class PracticaController {
         practicasList = FXCollections.observableArrayList();
         alumnosList = FXCollections.observableArrayList();
         empresasList = FXCollections.observableArrayList();
+        tablaPracticaTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         tablaPracticaTable.setItems(practicasList);
 
@@ -124,13 +128,17 @@ public class PracticaController {
                     idEmpresaComboBox.isHover() ||
                     dniAlumnoComboBox.isHover() ||
                     fechaInicioDatePicker.isHover() ||
-                    fechaFinDatePicker.isHover() ;
+                    fechaFinDatePicker.isHover();
 
             if (!tablaPracticaTable.isHover() && !esNodoDeEdicion) {
                 tablaPracticaTable.getSelectionModel().clearSelection();
 
             }
         });
+
+        if(tablaPracticaTable.getSelectionModel().getSelectedItems().size() > 1) {
+            editarButton.setDisable(true);
+        }
 
         cargarDatos();
         cargarAlumnos();
@@ -145,7 +153,8 @@ public class PracticaController {
     void insertarButton(ActionEvent event) {
         String dniAlumno = dniAlumnoComboBox.getValue();
         String idEmpresa = idEmpresaComboBox.getValue();
-        String fechaInicio = fechaInicioDatePicker.getValue() != null ? fechaInicioDatePicker.getValue().toString() : "";
+        String fechaInicio = fechaInicioDatePicker.getValue() != null ? fechaInicioDatePicker.getValue().toString()
+                : "";
         String fechaFin = fechaFinDatePicker.getValue() != null ? fechaFinDatePicker.getValue().toString() : "";
 
         if (fechaInicio.isEmpty() || fechaFin.isEmpty() || dniAlumno == null || idEmpresa == null) {
@@ -158,15 +167,15 @@ public class PracticaController {
             return;
         }
 
-
-        //obtener solo el dni del alumno y el id de la empresa del combobox para evitar errores de inserción
+        // obtener solo el dni del alumno y el id de la empresa del combobox para evitar
+        // errores de inserción
         String empresaId = idEmpresa.split(" - ")[0];
         String alumnoDNI = dniAlumno.split(" - ")[0];
 
         String query = "INSERT INTO practicas (dni_Alumno, id_Empresa, Fecha_Inicio, Fecha_Fin) VALUES (?, ?, ?, ?)";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setString(1, alumnoDNI);
             preparedStatement.setString(2, empresaId);
@@ -198,7 +207,8 @@ public class PracticaController {
         }
         String dniAlumno = dniAlumnoComboBox.getValue();
         String idEmpresa = idEmpresaComboBox.getValue();
-        String fechaInicio = fechaInicioDatePicker.getValue() != null ? fechaInicioDatePicker.getValue().toString() : null;
+        String fechaInicio = fechaInicioDatePicker.getValue() != null ? fechaInicioDatePicker.getValue().toString()
+                : null;
         String fechaFin = fechaFinDatePicker.getValue() != null ? fechaFinDatePicker.getValue().toString() : null;
 
         if (dniAlumno == null || dniAlumno.isEmpty()) {
@@ -227,7 +237,7 @@ public class PracticaController {
         String query = "UPDATE practicas SET DNI_Alumno = ?, ID_Empresa = ?, Fecha_Inicio = ?, Fecha_Fin = ? WHERE ID_Practica = ?";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setString(1, alumnoDNI);
             preparedStatement.setString(2, empresaID);
@@ -241,7 +251,7 @@ public class PracticaController {
                 limpiarCampos();
                 cargarDatos();
                 mostrarAlerta("Éxito", "Páctica actualizada correctamente.", Alert.AlertType.INFORMATION);
-                
+
             } else {
                 mostrarAlerta("Error", "No se pudo actualizar al alumno.", Alert.AlertType.ERROR);
             }
@@ -256,45 +266,44 @@ public class PracticaController {
 
     @FXML
     void deleteButton(ActionEvent event) {
+        ObservableList<Practica> seleccionados = FXCollections.observableArrayList(
+                tablaPracticaTable.getSelectionModel().getSelectedItems());
 
-        Practica practicaSeleccionada = tablaPracticaTable.getSelectionModel().getSelectedItem();
-
-        if (practicaSeleccionada == null) {
-            mostrarAlerta("Error", "Por favor, selecciona una practica para eliminiar", Alert.AlertType.ERROR);
+        if (seleccionados.isEmpty()) {
+            mostrarAlerta("Error", "Por favor, selecciona una práctica para eliminar.", Alert.AlertType.ERROR);
             return;
         }
 
-        int idEliminar = practicaSeleccionada.getIdPractica();
-
+        // Confirmación de eliminación
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Confirmar eliminación");
         confirmacion.setHeaderText(null);
-        confirmacion.setContentText("Estas seguro de que deseas eliminar la práctica con DNI " + idEliminar + "?");
+        confirmacion.setContentText("¿Estás seguro de que deseas eliminar las prácticas seleccionadas?");
 
         if (confirmacion.showAndWait().get() != ButtonType.OK) {
             return;
         }
 
-        String query = "DELETE FROM practicas WHERE ID_Practica = ?";
+        try (Connection con = HikariCPConexion.getConnection()) {
+            String query = "DELETE FROM practicas WHERE ID_Practica = ?";
+            PreparedStatement preparedStatement = con.prepareStatement(query);
 
-        try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setInt(1, idEliminar);
-            int rowsDeleted = preparedStatement.executeUpdate();
-
-            if (rowsDeleted > 0) {
-                practicasList.remove(practicaSeleccionada);
-                tablaPracticaTable.getSelectionModel().clearSelection();
-                limpiarCampos();
-                mostrarAlerta("Éxito", "Práctica eliminada correctamente.", Alert.AlertType.INFORMATION);
-
-            } else {
-                mostrarAlerta("Error", "No se pudo eliminar la práctica. Por favor, inténtalo de nuevo.", Alert.AlertType.ERROR);
+            for (Practica practica : seleccionados) {
+                preparedStatement.setInt(1, practica.getIdPractica());
+                preparedStatement.executeUpdate();
             }
 
+            // Eliminar elementos seleccionados de la lista de datos
+            practicasList.removeAll(seleccionados);
+
+            // Limpiar la selección
+            tablaPracticaTable.getSelectionModel().clearSelection();
+            limpiarCampos();
+            cargarDatos();
+            mostrarAlerta("Éxito", "Prácticas eliminadas correctamente.", Alert.AlertType.INFORMATION);
+
         } catch (SQLException e) {
-            mostrarAlerta("Error", "Error al eliminar la práctica: " + e.getMessage(), Alert.AlertType.ERROR);
+            mostrarAlerta("Error", "Error al eliminar las prácticas: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
@@ -329,8 +338,8 @@ public class PracticaController {
         String query = "SELECT * FROM practicas";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query);
-             ResultSet resultSet = statement.executeQuery()) {
+                PreparedStatement statement = connection.prepareStatement(query);
+                ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
                 Practica practica = new Practica(
@@ -338,13 +347,13 @@ public class PracticaController {
                         resultSet.getString("dni_Alumno"),
                         resultSet.getInt("id_Empresa"),
                         resultSet.getString("Fecha_Inicio"),
-                        resultSet.getString("Fecha_Fin")
-                );
+                        resultSet.getString("Fecha_Fin"));
                 practicasList.add(practica);
             }
 
         } catch (SQLException e) {
-            mostrarAlerta("Error", "Error al cargar datos de la tabla Práctica: " + e.getMessage(), Alert.AlertType.ERROR);
+            mostrarAlerta("Error", "Error al cargar datos de la tabla Práctica: " + e.getMessage(),
+                    Alert.AlertType.ERROR);
         }
     }
 
@@ -353,7 +362,6 @@ public class PracticaController {
         idPracticaField.setText(Integer.toString(practica.getIdPractica()));
         dniAlumnoComboBox.setValue(practica.getDniAlumno());
         idEmpresaComboBox.setValue(Integer.toString(practica.getIdEmpresa()));
-
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -387,11 +395,12 @@ public class PracticaController {
         String query = "SELECT DNI_Alumno, Nombre, Apellido FROM alumno";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query);
-             ResultSet resultSet = statement.executeQuery()) {
+                PreparedStatement statement = connection.prepareStatement(query);
+                ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
-                alumnosList.add(resultSet.getString("DNI_Alumno") + " - " + resultSet.getString("Nombre") + " " + resultSet.getString("Apellido"));
+                alumnosList.add(resultSet.getString("DNI_Alumno") + " - " + resultSet.getString("Nombre") + " "
+                        + resultSet.getString("Apellido"));
             }
 
         } catch (SQLException e) {
@@ -403,8 +412,8 @@ public class PracticaController {
         String query = "SELECT ID_Empresa, Nombre FROM empresa";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query);
-             ResultSet resultSet = statement.executeQuery()) {
+                PreparedStatement statement = connection.prepareStatement(query);
+                ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
                 empresasList.add(resultSet.getInt("ID_Empresa") + " - " + resultSet.getString("Nombre"));
@@ -415,7 +424,7 @@ public class PracticaController {
         }
     }
 
-    private void agregarListenerCampoIdPractica () {
+    private void agregarListenerCampoIdPractica() {
         idPracticaField.textProperty().addListener((observable, oldValue, newValue) -> {
             insertarButton.setDisable(newValue != null && !newValue.trim().isEmpty());
         });
@@ -427,8 +436,10 @@ public class PracticaController {
         idPracticaField.clear();
         fechaFinDatePicker.setValue(null);
         fechaInicioDatePicker.setValue(null);
-        dniAlumnoComboBox.setValue(null);;
-        idEmpresaComboBox.setValue(null);;
+        dniAlumnoComboBox.setValue(null);
+        ;
+        idEmpresaComboBox.setValue(null);
+        ;
     }
 
     private void mostrarAlerta(String titulo, String contenido, Alert.AlertType tipoAlerta) {
