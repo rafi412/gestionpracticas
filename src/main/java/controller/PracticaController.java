@@ -427,8 +427,8 @@ public class PracticaController {
         idPracticaField.clear();
         fechaFinDatePicker.setValue(null);
         fechaInicioDatePicker.setValue(null);
-        dniAlumnoComboBox.getSelectionModel().clearSelection();
-        idEmpresaComboBox.getSelectionModel().clearSelection();
+        dniAlumnoComboBox.setValue(null);;
+        idEmpresaComboBox.setValue(null);;
     }
 
     private void mostrarAlerta(String titulo, String contenido, Alert.AlertType tipoAlerta) {
