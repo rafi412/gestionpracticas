@@ -4,6 +4,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -136,9 +137,14 @@ public class PracticaController {
             }
         });
 
-        if(tablaPracticaTable.getSelectionModel().getSelectedItems().size() > 1) {
-            editarButton.setDisable(true);
-        }
+        tablaPracticaTable.getSelectionModel().getSelectedItems().addListener((ListChangeListener<Practica>) change -> {
+            // Verificar si hay más de un elemento seleccionado
+            if (tablaPracticaTable.getSelectionModel().getSelectedItems().size() > 1) {
+                editarButton.setDisable(true);  // Desactivar el botón Editar si hay más de un elemento seleccionado
+            } else {
+                editarButton.setDisable(false); // Habilitar el botón Editar si solo hay un elemento seleccionado
+            }
+        });
 
         cargarDatos();
         cargarAlumnos();
