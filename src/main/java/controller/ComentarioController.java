@@ -188,10 +188,11 @@ public class ComentarioController {
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected > 0) {
+                limpiarCampos();
+                cargarDatosComentarios();
                 mostrarAlerta("Éxito", "Comentario insertado correctamente", AlertType.INFORMATION);
                 ;
-                comentariosList.clear();
-                cargarDatosComentarios();
+            
             } else {
                 mostrarAlerta("Error", "No se pudo insertar el comentario", AlertType.ERROR);
             }

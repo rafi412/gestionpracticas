@@ -9,6 +9,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
@@ -169,17 +170,12 @@ public class AlumnoController {
 
             int rowsInserted = preparedStatement.executeUpdate();
             if (rowsInserted > 0) {
-
-                // Añadir el nuevo alumno a la lista de la tabla
-                Alumno nuevoAlumno = new Alumno(dni, cursoId, nombre, apellidos, fechaNacimiento, direccion, correo);
-                alumnosList.add(nuevoAlumno);
-
-                mostrarAlerta("Éxito", "Alumno insertado correctamente", Alert.AlertType.INFORMATION);
-
                 limpiarCampos();
+                cargarDatos();
+                mostrarAlerta("Éxito", "Alumno insertado correctamente", Alert.AlertType.INFORMATION);
             }
         } catch (SQLException e) {
-            System.out.println("Error al insertar alumno: " + e.getMessage());
+            mostrarAlerta("Error", "Error al insertar el alumno" + e.getMessage(), AlertType.ERROR);
         }
 
         alumnosList.clear();

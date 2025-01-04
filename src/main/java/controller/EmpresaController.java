@@ -273,7 +273,7 @@ public class EmpresaController {
         Empresa empresaSeleccionada = tablaEmpresaTable.getSelectionModel().getSelectedItem();
 
         if (empresaSeleccionada == null){
-            mostrarAlerta("Error", "Por favor, selecciona una practica para eliminiar", Alert.AlertType.ERROR);
+            mostrarAlerta("Error", "Por favor, selecciona una empresa para eliminiar", Alert.AlertType.ERROR);
             return;
         }
 
@@ -314,7 +314,6 @@ public class EmpresaController {
 
     @FXML
     void actionCancelarButton(ActionEvent event) {
-
         limpiarCampos();
     }
 

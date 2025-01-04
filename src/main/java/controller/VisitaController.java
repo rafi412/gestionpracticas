@@ -1,6 +1,9 @@
 package controller;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -16,6 +19,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import main.HikariCPConexion;
 import model.Alumno;
+import model.Practica;
 import model.Visita;
 
 import java.io.IOException;
@@ -115,6 +119,7 @@ public class VisitaController {
         visitasList = FXCollections.observableArrayList();
         practicasList = FXCollections.observableArrayList();
         tutoresList = FXCollections.observableArrayList();
+        tablaVisitaTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         tablaVisitaTable.setItems(visitasList);
 
@@ -136,6 +141,15 @@ public class VisitaController {
             if (!tablaVisitaTable.isHover() && !esNodoDeEdicion) {
                 tablaVisitaTable.getSelectionModel().clearSelection();
 
+            }
+        });
+
+        tablaVisitaTable.getSelectionModel().getSelectedItems().addListener((ListChangeListener<Visita>) change -> {
+            // Verificar si hay más de un elemento seleccionado
+            if (tablaVisitaTable.getSelectionModel().getSelectedItems().size() > 1) {
+                editarButton.setDisable(true);  // Desactivar el botón Editar si hay más de un elemento seleccionado
+            } else {
+                editarButton.setDisable(false); // Habilitar el botón Editar si solo hay un elemento seleccionado
             }
         });
 
@@ -177,9 +191,11 @@ public class VisitaController {
 
             int rowsInserted = statement.executeUpdate();
             if (rowsInserted > 0) {
+                limpiarCampos();
                 cargarDatos();
                 mostrarAlerta("Éxito", "Visita insertada correctamente.", Alert.AlertType.INFORMATION);
-                
+            } else{
+                mostrarAlerta("Error", "No se pudo insertar la visita.", Alert.AlertType.ERROR);
             }
 
         } catch (SQLException e) {

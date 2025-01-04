@@ -190,10 +190,9 @@ public class PracticaController {
 
             int rowsInserted = preparedStatement.executeUpdate();
             if (rowsInserted > 0) {
-                mostrarAlerta("Éxito", "Práctica insertada correctamente.", Alert.AlertType.INFORMATION);
-
                 cargarDatos();
                 limpiarCampos();
+                mostrarAlerta("Éxito", "Práctica insertada correctamente.", Alert.AlertType.INFORMATION);
             }
 
         } catch (SQLException e) {
