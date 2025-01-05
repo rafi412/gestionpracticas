@@ -12,6 +12,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -94,7 +95,6 @@ public class VisitaController {
     private ObservableList<String> practicasList;
     private ObservableList<String> tutoresList;
 
-
     public VisitaController() {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/verTablaVisita.fxml"));
         loader.setController(this);
@@ -147,7 +147,7 @@ public class VisitaController {
         tablaVisitaTable.getSelectionModel().getSelectedItems().addListener((ListChangeListener<Visita>) change -> {
             // Verificar si hay más de un elemento seleccionado
             if (tablaVisitaTable.getSelectionModel().getSelectedItems().size() > 1) {
-                editarButton.setDisable(true);  // Desactivar el botón Editar si hay más de un elemento seleccionado
+                editarButton.setDisable(true); // Desactivar el botón Editar si hay más de un elemento seleccionado
             } else {
                 editarButton.setDisable(false); // Habilitar el botón Editar si solo hay un elemento seleccionado
             }
@@ -166,11 +166,13 @@ public class VisitaController {
     void insertButton(ActionEvent event) {
         String idPractica = idPracticaComboBox.getValue();
         String dniTutor = dniTutorComboBox.getValue();
-        String fechaVisita = fechaVisitaDatePicker.getValue() != null ? fechaVisitaDatePicker.getValue().toString() : "";
+        String fechaVisita = fechaVisitaDatePicker.getValue() != null ? fechaVisitaDatePicker.getValue().toString()
+                : "";
         String observaciones = observacionesField.getText();
         String comentarioTutor = comentarioTutorField.getText();
 
-        if (idPractica == null || dniTutor == null || fechaVisita.isEmpty() || observaciones.isEmpty() || comentarioTutor.isEmpty()) {
+        if (idPractica == null || dniTutor == null || fechaVisita.isEmpty() || observaciones.isEmpty()
+                || comentarioTutor.isEmpty()) {
             mostrarAlerta("Error", "Completa todos los campos requeridos.", Alert.AlertType.ERROR);
             return;
         }
@@ -181,7 +183,7 @@ public class VisitaController {
         String query = "INSERT INTO visita_seguimiento (ID_Practica, DNI_Tutor, Fecha_Visita, Observaciones, Comentario_Tutor) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query)) {
+                PreparedStatement statement = connection.prepareStatement(query)) {
 
             statement.setString(1, practidaId);
             statement.setString(2, tutorDNI);
@@ -194,7 +196,7 @@ public class VisitaController {
                 limpiarCampos();
                 cargarDatos();
                 mostrarAlerta("Éxito", "Visita insertada correctamente.", Alert.AlertType.INFORMATION);
-            } else{
+            } else {
                 mostrarAlerta("Error", "No se pudo insertar la visita.", Alert.AlertType.ERROR);
             }
 
@@ -217,7 +219,8 @@ public class VisitaController {
         String dniTutor = dniTutorComboBox.getValue();
         String observaciones = observacionesField.getText();
         String comentarioTutor = comentarioTutorField.getText();
-        String fechaVisita = fechaVisitaDatePicker.getValue() != null ? fechaVisitaDatePicker.getValue().toString() : null;
+        String fechaVisita = fechaVisitaDatePicker.getValue() != null ? fechaVisitaDatePicker.getValue().toString()
+                : null;
 
         String practidaId = idPractica.split(" - ")[0];
         String tutorDNI = dniTutor.split(" - ")[0];
@@ -225,7 +228,7 @@ public class VisitaController {
         String query = "UPDATE visita_seguimiento SET ID_Practica = ?, DNI_Tutor = ?, Fecha_Visita = ?, Observaciones = ?, Comentario_Tutor = ? WHERE ID_Visita = ?";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setString(1, practidaId);
             preparedStatement.setString(2, tutorDNI);
@@ -252,44 +255,39 @@ public class VisitaController {
 
     @FXML
     void deleteButton(ActionEvent event) {
-        Visita visitaSeleccionada = tablaVisitaTable.getSelectionModel().getSelectedItem();
+        ObservableList<Visita> visitasSeleccionadas = tablaVisitaTable.getSelectionModel().getSelectedItems();
 
-        if (visitaSeleccionada == null) {
+        if (visitasSeleccionadas.isEmpty()) {
             mostrarAlerta("Error", "Selecciona una visita", Alert.AlertType.ERROR);
             return;
         }
 
-        int idEliminar = visitaSeleccionada.getIdVisita();
-
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Confirmar eliminación");
         confirmacion.setHeaderText(null);
-        confirmacion.setContentText("¿Estás seguro de que quieres eliminar la visita con ID " + idEliminar + "?");
+        confirmacion.setContentText("¿Estás seguro de que quieres eliminar las visitas seleccionadas?");
 
         if (confirmacion.showAndWait().get() != ButtonType.OK) {
             return;
         }
 
-        String query = "DELETE FROM visita_seguimiento WHERE ID_Visita = ?";
-
-        try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setInt(1, idEliminar);
-            int rowsDeleted = preparedStatement.executeUpdate();
-
-            if (rowsDeleted > 0) {
-                visitasList.remove(visitaSeleccionada);
-                tablaVisitaTable.getSelectionModel().clearSelection();
-                limpiarCampos();
-                mostrarAlerta("Éxito", "Alumno eliminado correctamente.", Alert.AlertType.INFORMATION);
-
-            } else {
-                mostrarAlerta("Error", "No se pudo eliminar al alumno. Por favor, inténtalo de nuevo.", Alert.AlertType.ERROR);
+        try (Connection connection = HikariCPConexion.getConnection()) {
+            String query = "DELETE FROM visita_seguimiento WHERE ID_Visita = ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            for (Visita visita : visitasSeleccionadas) {
+                preparedStatement.setInt(1, visita.getIdVisita());
+                preparedStatement.executeUpdate();
             }
 
+            visitasList.removeAll(visitasSeleccionadas);
+
+            tablaVisitaTable.getSelectionModel().clearSelection();
+            limpiarCampos();
+            cargarDatos();
+            mostrarAlerta("Éxito", "Visitas eliminadas", AlertType.INFORMATION);
+
         } catch (SQLException e) {
-            mostrarAlerta("Error", "Error al eliminar el alumno: " + e.getMessage(), Alert.AlertType.ERROR);
+            mostrarAlerta("Error", "Error al eliminar la visita: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
@@ -319,7 +317,7 @@ public class VisitaController {
         limpiarCampos();
     }
 
-    private void agregarListenerCampoIdVisita () {
+    private void agregarListenerCampoIdVisita() {
         idVisitaField.textProperty().addListener((observable, oldValue, newValue) -> {
             insertButton.setDisable(newValue != null && !newValue.trim().isEmpty());
         });
@@ -365,8 +363,8 @@ public class VisitaController {
         String query = "SELECT * FROM visita_seguimiento";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query);
-             ResultSet resultSet = statement.executeQuery()) {
+                PreparedStatement statement = connection.prepareStatement(query);
+                ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
                 Visita visita = new Visita(
@@ -375,8 +373,7 @@ public class VisitaController {
                         resultSet.getString("DNI_Tutor"),
                         resultSet.getString("Fecha_Visita"),
                         resultSet.getString("Observaciones"),
-                        resultSet.getString("Comentario_Tutor")
-                );
+                        resultSet.getString("Comentario_Tutor"));
                 visitasList.add(visita);
             }
 
@@ -390,19 +387,19 @@ public class VisitaController {
         String query2 = "SELECT Nombre, Apellido FROM alumno INNER JOIN practicas ON alumno.DNI_Alumno = practicas.DNI_Alumno";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query);
-             PreparedStatement statement2 = connection.prepareStatement(query2);
-             ResultSet resultSet = statement.executeQuery();
-             ResultSet resultSet2 = statement2.executeQuery()) {
+                PreparedStatement statement = connection.prepareStatement(query);
+                PreparedStatement statement2 = connection.prepareStatement(query2);
+                ResultSet resultSet = statement.executeQuery();
+                ResultSet resultSet2 = statement2.executeQuery()) {
 
             while (resultSet.next() && resultSet2.next()) {
-                practicasList.add(resultSet.getString("ID_Practica") + " - " + resultSet2.getString("Nombre") + " " + resultSet2.getString("Apellido"));
+                practicasList.add(resultSet.getString("ID_Practica") + " - " + resultSet2.getString("Nombre") + " "
+                        + resultSet2.getString("Apellido"));
             }
 
         } catch (SQLException e) {
             mostrarAlerta("Error", "Error al cargar prácticas: " + e.getMessage(), Alert.AlertType.ERROR);
         }
-
 
     }
 
@@ -410,11 +407,12 @@ public class VisitaController {
         String query = "SELECT DNI_Tutor_Empresa, Nombre, Apellido FROM tutor_empresa";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query);
-             ResultSet resultSet = statement.executeQuery()) {
+                PreparedStatement statement = connection.prepareStatement(query);
+                ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
-                tutoresList.add(resultSet.getString("DNI_Tutor_Empresa") + " - " + resultSet.getString("Nombre") + " " + resultSet.getString("Apellido"));
+                tutoresList.add(resultSet.getString("DNI_Tutor_Empresa") + " - " + resultSet.getString("Nombre") + " "
+                        + resultSet.getString("Apellido"));
             }
 
         } catch (SQLException e) {
