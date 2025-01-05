@@ -133,14 +133,13 @@ public class PracticaController {
 
             if (!tablaPracticaTable.isHover() && !esNodoDeEdicion) {
                 tablaPracticaTable.getSelectionModel().clearSelection();
-
             }
         });
 
         tablaPracticaTable.getSelectionModel().getSelectedItems().addListener((ListChangeListener<Practica>) change -> {
             // Verificar si hay más de un elemento seleccionado
             if (tablaPracticaTable.getSelectionModel().getSelectedItems().size() > 1) {
-                editarButton.setDisable(true);  // Desactivar el botón Editar si hay más de un elemento seleccionado
+                editarButton.setDisable(true); // Desactivar el botón Editar si hay más de un elemento seleccionado
             } else {
                 editarButton.setDisable(false); // Habilitar el botón Editar si solo hay un elemento seleccionado
             }
@@ -364,37 +363,88 @@ public class PracticaController {
 
     private void llenarCampos(Practica practica) {
 
+        // Rellenar campo de ID de práctica
         idPracticaField.setText(Integer.toString(practica.getIdPractica()));
-        dniAlumnoComboBox.setValue(practica.getDniAlumno());
-        idEmpresaComboBox.setValue(Integer.toString(practica.getIdEmpresa()));
+    
+        String query = "SELECT DNI_Alumno, Nombre, Apellido FROM alumno WHERE DNI_Alumno = ?";
+    
+        try (Connection connection = HikariCPConexion.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+    
+            // Establece el valor del parámetro ? en la consulta
+            statement.setString(1, practica.getDniAlumno());
+    
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    // Construye el valor para la ComboBox
+                    dniAlumnoComboBox.setValue(
+                            resultSet.getString("DNI_Alumno") + " - " +
+                            resultSet.getString("Nombre") + " " +
+                            resultSet.getString("Apellido")
+                    );
+                } else {
+                    dniAlumnoComboBox.setValue("Alumno no encontrado");
+                }
+            }
+    
+        } catch (SQLException e) {
+            mostrarAlerta("Error", "Error al cargar datos de alumnos: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+    
+        String query2 = "SELECT ID_Empresa, Nombre FROM empresa WHERE ID_Empresa = ?";
 
+        try (Connection connection = HikariCPConexion.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query2)) {
+
+            // Establece el valor del parámetro ? en la consulta
+            statement.setInt(1, practica.getIdEmpresa());
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    // Construye el valor para la ComboBox
+                    idEmpresaComboBox.setValue(
+                            resultSet.getInt("ID_Empresa") + " - " +
+                            resultSet.getString("Nombre")
+                    );
+                } else {
+                    idEmpresaComboBox.setValue("Empresa no encontrada");
+                }
+            }
+
+        } catch (SQLException e) {
+            mostrarAlerta("Error", "Error al cargar datos de empresas: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+    
+        // Formateador para las fechas
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
+    
+        // Rellenar fecha de inicio
         if (practica.getFechaInicio() != null && !practica.getFechaInicio().isEmpty()) {
             try {
                 LocalDate fechaInicio = LocalDate.parse(practica.getFechaInicio(), formatter);
                 fechaInicioDatePicker.setValue(fechaInicio);
             } catch (DateTimeParseException e) {
-                System.out.println("Error al convertir la fecha: " + e.getMessage());
+                System.out.println("Error al convertir la fecha de inicio: " + e.getMessage());
                 fechaInicioDatePicker.setValue(null);
             }
         } else {
             fechaInicioDatePicker.setValue(null);
         }
-
+    
+        // Rellenar fecha de fin
         if (practica.getFechaFin() != null && !practica.getFechaFin().isEmpty()) {
             try {
                 LocalDate fechaFin = LocalDate.parse(practica.getFechaFin(), formatter);
                 fechaFinDatePicker.setValue(fechaFin);
             } catch (DateTimeParseException e) {
-                System.out.println("Error al convertir la fecha: " + e.getMessage());
+                System.out.println("Error al convertir la fecha de fin: " + e.getMessage());
                 fechaFinDatePicker.setValue(null);
             }
         } else {
             fechaFinDatePicker.setValue(null);
         }
-
     }
+    
 
     private void cargarAlumnos() {
         String query = "SELECT DNI_Alumno, Nombre, Apellido FROM alumno";
@@ -442,9 +492,7 @@ public class PracticaController {
         fechaFinDatePicker.setValue(null);
         fechaInicioDatePicker.setValue(null);
         dniAlumnoComboBox.setValue(null);
-        ;
         idEmpresaComboBox.setValue(null);
-        ;
     }
 
     private void mostrarAlerta(String titulo, String contenido, Alert.AlertType tipoAlerta) {
