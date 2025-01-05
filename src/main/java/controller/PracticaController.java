@@ -136,12 +136,25 @@ public class PracticaController {
             }
         });
 
+        //Desactivar botón Editar si hay 2 o más elementos seleccionados
         tablaPracticaTable.getSelectionModel().getSelectedItems().addListener((ListChangeListener<Practica>) change -> {
             // Verificar si hay más de un elemento seleccionado
             if (tablaPracticaTable.getSelectionModel().getSelectedItems().size() > 1) {
                 editarButton.setDisable(true); // Desactivar el botón Editar si hay más de un elemento seleccionado
             } else {
                 editarButton.setDisable(false); // Habilitar el botón Editar si solo hay un elemento seleccionado
+            }
+        });
+
+        //Evitar la selección de rangos eliminando los seleccionados no deseados
+        tablaPracticaTable.getSelectionModel().getSelectedItems().addListener((ListChangeListener<Practica>) change -> {
+            while (change.next()) {
+                if (change.wasAdded() && change.getAddedSubList().size() > 1) {
+                    // Evitar la selección de rangos eliminando los seleccionados no deseados
+                    Practica ultimoSeleccionado = change.getAddedSubList().get(change.getAddedSubList().size() - 1);
+                    tablaPracticaTable.getSelectionModel().clearSelection();
+                    tablaPracticaTable.getSelectionModel().select(ultimoSeleccionado);
+                }
             }
         });
 

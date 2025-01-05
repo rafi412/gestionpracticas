@@ -146,6 +146,17 @@ public class ComentarioController {
             }
         });
 
+        tablaComentarioTable.getSelectionModel().getSelectedItems().addListener((ListChangeListener<Comentario>) change -> {
+            while (change.next()) {
+                if (change.wasAdded() && change.getAddedSubList().size() > 1) {
+                    // Evitar la selección de rangos eliminando los seleccionados no deseados
+                    Comentario ultimoSeleccionado = change.getAddedSubList().get(change.getAddedSubList().size() - 1);
+                    tablaComentarioTable.getSelectionModel().clearSelection();
+                    tablaComentarioTable.getSelectionModel().select(ultimoSeleccionado);
+                }
+            }
+        });
+
     }
 
     @FXML

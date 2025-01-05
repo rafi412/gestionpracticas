@@ -337,8 +337,45 @@ public class VisitaController {
     private void llenarCampos(Visita visita) {
 
         idVisitaField.setText(Integer.toString(visita.getIdVisita()));
-        idPracticaComboBox.setValue(String.valueOf(visita.getIdPractica()));
-        dniTutorComboBox.setValue(visita.getDniTutor());
+        
+        String query = "SELECT ID_Practica, Nombre, Apellido FROM practicas INNER JOIN alumno ON practicas.DNI_Alumno = alumno.DNI_Alumno WHERE ID_Practica = ?";
+
+        try(Connection connection = HikariCPConexion.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, visita.getIdPractica());
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                idPracticaComboBox.setValue(
+                        resultSet.getString("ID_Practica") + " - "
+                                + resultSet.getString("Nombre") + " "
+                                + resultSet.getString("Apellido"));
+            } else {
+                mostrarAlerta("Error", "No se encontró la práctica con el ID especificado.",
+                        Alert.AlertType.INFORMATION);
+            }
+        } catch (SQLException e) {
+            mostrarAlerta("Error", "Error al cargar prácticas: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+
+        String query2 = "SELECT DNI_tutor_empresa, Nombre, Apellido From tutor_empresa WHERE DNI_tutor_empresa = ?";
+
+        try (Connection connection = HikariCPConexion.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query2)) {
+            statement.setString(1, visita.getDniTutor());
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                dniTutorComboBox.setValue(
+                        resultSet.getString("DNI_tutor_empresa") + " - "
+                                + resultSet.getString("Nombre") + " - "
+                                + resultSet.getString("Apellido"));
+            } else {
+                mostrarAlerta("Error", "No se encontró el tutor con el DNI especificado.",
+                        Alert.AlertType.INFORMATION);
+            }
+        } catch (SQLException e) {
+            mostrarAlerta("Error", "Error al cargar tutores: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+
         observacionesField.setText(visita.getObservaciones());
         comentarioTutorField.setText(visita.getComentarioTutor());
 
@@ -404,14 +441,14 @@ public class VisitaController {
     }
 
     private void cargarTutores() {
-        String query = "SELECT DNI_Tutor_Empresa, Nombre, Apellido FROM tutor_empresa";
+        String query = "SELECT dni_tutor_empresa, Nombre, Apellido FROM tutor_empresa";
 
         try (Connection connection = HikariCPConexion.getConnection();
                 PreparedStatement statement = connection.prepareStatement(query);
                 ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
-                tutoresList.add(resultSet.getString("DNI_Tutor_Empresa") + " - " + resultSet.getString("Nombre") + " "
+                tutoresList.add(resultSet.getString("dni_tutor_empresa") + " - " + resultSet.getString("Nombre") + " "
                         + resultSet.getString("Apellido"));
             }
 
