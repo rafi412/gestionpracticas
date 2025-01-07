@@ -80,8 +80,15 @@ public class PracticaController {
 
     @FXML
     private ComboBox<String> idEmpresaComboBox;
+
     @FXML
     private Button volverButton;
+
+    @FXML
+    private TextField buscarTextField;
+
+    @FXML
+    private Button buscarButton;
 
     private ObservableList<Practica> practicasList;
     private ObservableList<String> alumnosList;
@@ -164,6 +171,15 @@ public class PracticaController {
 
         dniAlumnoComboBox.setItems(alumnosList);
         idEmpresaComboBox.setItems(empresasList);
+
+        //Listener en tiempo real para buscar por ID en el textField
+        buscarTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null || newValue.isEmpty()) {
+                cargarDatos(); // Si el campo está vacío, cargar todos los datos.
+            } else {
+                realizarBusqueda(newValue); // Realizar búsqueda en tiempo real.
+            }
+        });
 
     }
 
@@ -350,6 +366,8 @@ public class PracticaController {
         }
     }
 
+   
+    // Método para cargar los datos de la tabla de prácticas en el tableView
     private void cargarDatos() {
         practicasList.clear();
         String query = "SELECT * FROM practicas";
@@ -374,6 +392,7 @@ public class PracticaController {
         }
     }
 
+    // Método para rellenar los campos de la práctica seleccionada en la tabla
     private void llenarCampos(Practica practica) {
 
         // Rellenar campo de ID de práctica
@@ -458,7 +477,7 @@ public class PracticaController {
         }
     }
     
-
+    // Método para cargar los datos de los alumnos en la ComboBox
     private void cargarAlumnos() {
         String query = "SELECT DNI_Alumno, Nombre, Apellido FROM alumno";
 
@@ -476,6 +495,7 @@ public class PracticaController {
         }
     }
 
+    // Método para cargar los datos de las empresas en la ComboBox
     private void cargarEmpresas() {
         String query = "SELECT ID_Empresa, Nombre FROM empresa";
 
@@ -489,6 +509,34 @@ public class PracticaController {
 
         } catch (SQLException e) {
             mostrarAlerta("Error", "Error al cargar datos de empresas: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+    }
+
+    //Realizar búsqueda por ID de práctica
+    private void realizarBusqueda(String termino) {
+        practicasList.clear();
+        String query = "SELECT * FROM practicas WHERE ID_Practica LIKE ?";
+    
+        try (Connection connection = HikariCPConexion.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+    
+            // Usa LIKE con comodines para búsquedas parciales
+            statement.setString(1, "%" + termino + "%");
+    
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    Practica practica = new Practica(
+                            resultSet.getInt("ID_Practica"),
+                            resultSet.getString("DNI_Alumno"),
+                            resultSet.getInt("ID_Empresa"),
+                            resultSet.getString("Fecha_Inicio"),
+                            resultSet.getString("Fecha_Fin"));
+                    practicasList.add(practica);
+                }
+            }
+    
+        } catch (SQLException e) {
+            mostrarAlerta("Error", "Error al buscar prácticas: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 

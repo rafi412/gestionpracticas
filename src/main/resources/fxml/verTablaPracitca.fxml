@@ -32,6 +32,7 @@
          <children>
             <VBox alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="550.0" prefHeight="390.0" prefWidth="134.0" spacing="10.0" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.hgrow="ALWAYS">
                <children>
+                  <TextField fx:id="buscarTextField" />
                   <TextField fx:id="idPracticaField" />
                   <ComboBox fx:id="dniAlumnoComboBox" maxWidth="1.7976931348623157E308" prefHeight="25.0" prefWidth="190.0" VBox.vgrow="ALWAYS" />
                   <ComboBox fx:id="idEmpresaComboBox" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" />
@@ -47,6 +48,11 @@
             </VBox>
             <VBox alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="390.0" prefWidth="128.0" spacing="15.0" GridPane.halignment="CENTER" GridPane.hgrow="NEVER">
                <children>
+                  <Label text="Buscar por ID:">
+                     <font>
+                        <Font size="14.0" />
+                     </font>
+                  </Label>
                   <Label alignment="TOP_CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="20.0" prefWidth="153.0" text="ID Practica">
                      <font>
                         <Font size="14.0" />
