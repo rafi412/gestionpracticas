@@ -70,6 +70,8 @@ public class AlumnoController {
     private Button editarButton;
     @FXML
     private Button insertButton;
+    @FXML
+    private TextField buscarTextField;
 
     private ObservableList<Alumno> alumnosList;
     private ObservableList<String> cursosList;
@@ -151,6 +153,16 @@ public class AlumnoController {
                 }
             }
         });
+
+        //Listener en tiempo real para buscar DNI en el TextField
+        buscarTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+           if (newValue == null || newValue.isEmpty()) {
+               cargarDatos();
+           } else {
+               realizarBusqueda();
+           }
+        });
+        
 
     }
 
@@ -447,6 +459,36 @@ public class AlumnoController {
             }
         } catch (SQLException e) {
             mostrarAlerta("Error", "Error al cargar cursos: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+    }
+
+    private void realizarBusqueda() {
+        alumnosList.clear();
+        String busqueda = buscarTextField.getText();
+        String query = "SELECT * FROM Alumno WHERE DNI_Alumno LIKE ?";
+
+        try (Connection connection = HikariCPConexion.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setString(1, "%" + busqueda + "%");
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                String cursoId = resultSet.getString("Curso");
+                Alumno alumno = new Alumno(
+                        resultSet.getString("DNI_Alumno"),
+                        cursoId,
+                        resultSet.getString("Nombre"),
+                        resultSet.getString("Apellido"),
+                        resultSet.getString("Fecha_Nacimiento"),
+                        resultSet.getString("Direccion"),
+                        resultSet.getString("Correo_E")
+                );
+                alumnosList.add(alumno);
+            }
+
+        } catch (SQLException e) {
+            mostrarAlerta("Error", "Error al buscar el alumno: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
