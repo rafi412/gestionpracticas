@@ -1,5 +1,8 @@
 package controller;
 
+import javafx.animation.FadeTransition;
+import javafx.animation.ScaleTransition;
+import javafx.animation.TranslateTransition;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -15,6 +18,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import main.HikariCPConexion;
 import model.Alumno;
 import model.Practica;
@@ -71,7 +75,7 @@ public class AlumnoController {
     @FXML
     private Button insertButton;
     @FXML
-    private TextField buscarTextField;
+    private TextField buscarNombreTextField;
 
     private ObservableList<Alumno> alumnosList;
     private ObservableList<String> cursosList;
@@ -132,7 +136,7 @@ public class AlumnoController {
             }
         });
 
-        //Desactivar botón Editar si hay 2 o más elementos seleccionados
+        // Desactivar botón Editar si hay 2 o más elementos seleccionados
         alumnoTableView.getSelectionModel().getSelectedItems().addListener((ListChangeListener<Alumno>) change -> {
             // Verificar si hay más de un elemento seleccionado
             if (alumnoTableView.getSelectionModel().getSelectedItems().size() > 1) {
@@ -142,7 +146,7 @@ public class AlumnoController {
             }
         });
 
-        //Evitar la selección de rangos eliminando los seleccionados no deseados
+        // Evitar la selección de rangos eliminando los seleccionados no deseados
         alumnoTableView.getSelectionModel().getSelectedItems().addListener((ListChangeListener<Alumno>) change -> {
             while (change.next()) {
                 if (change.wasAdded() && change.getAddedSubList().size() > 1) {
@@ -154,16 +158,14 @@ public class AlumnoController {
             }
         });
 
-        //Listener en tiempo real para buscar DNI en el TextField
-        buscarTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-           if (newValue == null || newValue.isEmpty()) {
-               cargarDatos();
-           } else {
-               realizarBusqueda();
-           }
+        // Listener en tiempo real para buscar DNI en el TextField
+        buscarNombreTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null || newValue.isEmpty()) {
+                cargarDatos();
+            } else {
+                realizarBusqueda();
+            }
         });
-        
-
     }
 
     @FXML
@@ -191,7 +193,8 @@ public class AlumnoController {
             return;
         }
         String fechaNacimiento = fechaNacimientoDatePicker.getValue().toString();
-        if (dni.isEmpty() || nombre.isEmpty() || apellidos.isEmpty() || direccion.isEmpty() || correo.isEmpty() || curso == null) {
+        if (dni.isEmpty() || nombre.isEmpty() || apellidos.isEmpty() || direccion.isEmpty() || correo.isEmpty()
+                || curso == null) {
             System.out.println("Todos los campos deben estar completos.");
             return;
         }
@@ -202,7 +205,7 @@ public class AlumnoController {
         String query = "INSERT INTO Alumno (DNI_Alumno, Curso, Nombre, Apellido, Fecha_Nacimiento, Direccion, Correo_E) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setString(1, dni);
             preparedStatement.setString(2, cursoId);
@@ -228,7 +231,8 @@ public class AlumnoController {
 
     @FXML
     void updateButton(ActionEvent event) {
-        if (dniAlumnoTextField.getText().isEmpty() || nombreTextField.getText().isEmpty() || apellidosTextField.getText().isEmpty()) {
+        if (dniAlumnoTextField.getText().isEmpty() || nombreTextField.getText().isEmpty()
+                || apellidosTextField.getText().isEmpty()) {
             mostrarAlerta("Error", "Por favor, complete todos los campos obligatorios.", Alert.AlertType.ERROR);
             dniAlumnoTextField.setEditable(true);
             return;
@@ -240,7 +244,9 @@ public class AlumnoController {
         String direccion = direccionTextField.getText();
         String correo = correoTextField.getText();
         String curso = cursoComboBox.getValue();
-        String fechaNacimiento = fechaNacimientoDatePicker.getValue() != null ? fechaNacimientoDatePicker.getValue().toString() : null;
+        String fechaNacimiento = fechaNacimientoDatePicker.getValue() != null
+                ? fechaNacimientoDatePicker.getValue().toString()
+                : null;
 
         if (curso == null || curso.isEmpty()) {
             mostrarAlerta("Error", "Seleccione un curso.", Alert.AlertType.WARNING);
@@ -257,7 +263,7 @@ public class AlumnoController {
         String query = "UPDATE Alumno SET Nombre = ?, Apellido = ?, Direccion = ?, Correo_E = ?, Fecha_Nacimiento = ?, Curso = ? WHERE DNI_Alumno = ?";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setString(1, nombre);
             preparedStatement.setString(2, apellidos);
@@ -272,7 +278,7 @@ public class AlumnoController {
             if (filasActualizadas > 0) {
                 cargarDatos();
                 mostrarAlerta("Éxito", "Alumno actualizado correctamente.", Alert.AlertType.INFORMATION);
-                
+
             } else {
                 mostrarAlerta("Error", "No se pudo actualizar al alumno.", Alert.AlertType.ERROR);
             }
@@ -311,7 +317,7 @@ public class AlumnoController {
         String query = "DELETE FROM Alumno WHERE DNI_Alumno = ?";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setString(1, dni);
             int rowsDeleted = preparedStatement.executeUpdate();
@@ -323,7 +329,8 @@ public class AlumnoController {
                 mostrarAlerta("Éxito", "Alumno eliminado correctamente.", Alert.AlertType.INFORMATION);
 
             } else {
-                mostrarAlerta("Error", "No se pudo eliminar al alumno. Por favor, inténtalo de nuevo.", Alert.AlertType.ERROR);
+                mostrarAlerta("Error", "No se pudo eliminar al alumno. Por favor, inténtalo de nuevo.",
+                        Alert.AlertType.ERROR);
             }
 
         } catch (SQLException e) {
@@ -405,8 +412,8 @@ public class AlumnoController {
 
         String query = "SELECT ID_curso, Nombre FROM Curso WHERE ID_Curso = ?";
 
-        try(Connection connection = HikariCPConexion.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+        try (Connection connection = HikariCPConexion.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setString(1, alumno.getCurso());
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -425,33 +432,33 @@ public class AlumnoController {
         alumnosList.clear();
         String query = "SELECT * FROM Alumno";
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query);
-             ResultSet resultSet = statement.executeQuery()) {
+                PreparedStatement statement = connection.prepareStatement(query);
+                ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
                 // Modificación: solo agregar el ID del curso (no el nombre)
-                String cursoId = resultSet.getString("Curso");  // Obtiene solo el ID
+                String cursoId = resultSet.getString("Curso"); // Obtiene solo el ID
                 Alumno alumno = new Alumno(
                         resultSet.getString("DNI_Alumno"),
-                        cursoId,  // Solo el ID del curso
+                        cursoId, // Solo el ID del curso
                         resultSet.getString("Nombre"),
                         resultSet.getString("Apellido"),
                         resultSet.getString("Fecha_Nacimiento"),
                         resultSet.getString("Direccion"),
-                        resultSet.getString("Correo_E")
-                );
+                        resultSet.getString("Correo_E"));
                 alumnosList.add(alumno);
             }
         } catch (SQLException e) {
             mostrarAlerta("Error", "Error al cargar alumnos: " + e.getMessage(), Alert.AlertType.ERROR);
         }
+
     }
 
     private void cargarCursos() {
         String query = "SELECT ID_Curso, Nombre FROM Curso";
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query);
-             ResultSet resultSet = statement.executeQuery()) {
+                PreparedStatement statement = connection.prepareStatement(query);
+                ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
                 String curso = resultSet.getInt("ID_Curso") + " - " + resultSet.getString("Nombre");
@@ -464,11 +471,11 @@ public class AlumnoController {
 
     private void realizarBusqueda() {
         alumnosList.clear();
-        String busqueda = buscarTextField.getText();
-        String query = "SELECT * FROM Alumno WHERE DNI_Alumno LIKE ?";
+        String busqueda = buscarNombreTextField.getText();
+        String query = "SELECT * FROM Alumno WHERE CONCAT(Nombre, ' ', Apellido) LIKE ?";
 
         try (Connection connection = HikariCPConexion.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setString(1, "%" + busqueda + "%");
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -482,8 +489,7 @@ public class AlumnoController {
                         resultSet.getString("Apellido"),
                         resultSet.getString("Fecha_Nacimiento"),
                         resultSet.getString("Direccion"),
-                        resultSet.getString("Correo_E")
-                );
+                        resultSet.getString("Correo_E"));
                 alumnosList.add(alumno);
             }
 
