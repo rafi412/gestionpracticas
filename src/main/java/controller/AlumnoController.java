@@ -1,6 +1,7 @@
 package controller;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -16,6 +17,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import main.HikariCPConexion;
 import model.Alumno;
+import model.Practica;
 
 import java.io.IOException;
 import java.sql.*;
@@ -64,6 +66,10 @@ public class AlumnoController {
     private Button cancelarButton;
     @FXML
     private Button volverButton;
+    @FXML
+    private Button editarButton;
+    @FXML
+    private Button insertButton;
 
     private ObservableList<Alumno> alumnosList;
     private ObservableList<String> cursosList;
@@ -90,12 +96,15 @@ public class AlumnoController {
 
         alumnosList = FXCollections.observableArrayList();
         cursosList = FXCollections.observableArrayList();
+        alumnoTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         cargarDatos();
         cargarCursos();
 
         alumnoTableView.setItems(alumnosList);
         cursoComboBox.setItems(cursosList);
+
+        agregarListenerInsertar();
 
         // Detectar clics fuera de la tabla
         alumnoTableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
@@ -120,6 +129,29 @@ public class AlumnoController {
 
             }
         });
+
+        //Desactivar botón Editar si hay 2 o más elementos seleccionados
+        alumnoTableView.getSelectionModel().getSelectedItems().addListener((ListChangeListener<Alumno>) change -> {
+            // Verificar si hay más de un elemento seleccionado
+            if (alumnoTableView.getSelectionModel().getSelectedItems().size() > 1) {
+                editarButton.setDisable(true); // Desactivar el botón Editar si hay más de un elemento seleccionado
+            } else {
+                editarButton.setDisable(false); // Habilitar el botón Editar si solo hay un elemento seleccionado
+            }
+        });
+
+        //Evitar la selección de rangos eliminando los seleccionados no deseados
+        alumnoTableView.getSelectionModel().getSelectedItems().addListener((ListChangeListener<Alumno>) change -> {
+            while (change.next()) {
+                if (change.wasAdded() && change.getAddedSubList().size() > 1) {
+                    // Evitar la selección de rangos eliminando los seleccionados no deseados
+                    Alumno ultimoSeleccionado = change.getAddedSubList().get(change.getAddedSubList().size() - 1);
+                    alumnoTableView.getSelectionModel().clearSelection();
+                    alumnoTableView.getSelectionModel().select(ultimoSeleccionado);
+                }
+            }
+        });
+
     }
 
     @FXML
@@ -291,6 +323,7 @@ public class AlumnoController {
     void actionCancelarButton(ActionEvent event) {
         limpiarCampos();
         dniAlumnoTextField.setEditable(true);
+        insertButton.setDisable(false);
     }
 
     @FXML
@@ -316,6 +349,15 @@ public class AlumnoController {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void agregarListenerInsertar() {
+        alumnoTableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null) {
+                llenarCampos(newSelection);
+                insertButton.setDisable(true);
+            }
+        });
     }
 
     private void limpiarCampos() {
@@ -349,7 +391,22 @@ public class AlumnoController {
             fechaNacimientoDatePicker.setValue(null);
         }
 
-        cursoComboBox.setValue(alumno.getCurso());
+        String query = "SELECT ID_curso, Nombre FROM Curso WHERE ID_Curso = ?";
+
+        try(Connection connection = HikariCPConexion.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setString(1, alumno.getCurso());
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                String curso = resultSet.getInt("ID_Curso") + " - " + resultSet.getString("Nombre");
+                cursoComboBox.setValue(curso);
+            }
+
+        } catch (SQLException e) {
+            mostrarAlerta("Error", "Error al cargar el curso: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
     }
 
     private void cargarDatos() {

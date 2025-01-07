@@ -370,7 +370,20 @@ public class ComentarioController {
 
     private void llenarCampos(Comentario comentario) {
         idComentarioField.setText(Integer.toString(comentario.getIdComentario()));
-        idEmpresaComboBox.setValue(Integer.toString(comentario.getIdEmpresa()));
+        
+        String query = "SELECT ID_Empresa, Nombre FROM empresa WHERE ID_Empresa = ?";
+
+        try(Connection connection = HikariCPConexion.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, comentario.getIdEmpresa());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            String empresa = resultSet.getInt("ID_Empresa") + " - " + resultSet.getString("Nombre");
+            idEmpresaComboBox.setValue(empresa);
+        } catch (SQLException e) {
+            System.out.println("Error al cargar datos de la tabla Empresa: " + e.getMessage());
+        }
+
         notaField.setText(comentario.getNota());
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");

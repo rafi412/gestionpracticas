@@ -1,6 +1,7 @@
 package controller;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -14,6 +15,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import model.Empresa;
+import model.Practica;
 import main.HikariCPConexion;
 import java.io.IOException;
 import java.sql.*;
@@ -111,6 +113,7 @@ public class EmpresaController {
 
         empresasList = FXCollections.observableArrayList();
         especialidadesList = FXCollections.observableArrayList();
+        tablaEmpresaTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         cargarDatos();
         cargarEspecialidades();
@@ -146,6 +149,27 @@ public class EmpresaController {
             }
         });
 
+        //Desactivar botón Editar si hay 2 o más elementos seleccionados
+        tablaEmpresaTable.getSelectionModel().getSelectedItems().addListener((ListChangeListener<Empresa>) change -> {
+            // Verificar si hay más de un elemento seleccionado
+            if (tablaEmpresaTable.getSelectionModel().getSelectedItems().size() > 1) {
+                editarButton.setDisable(true); // Desactivar el botón Editar si hay más de un elemento seleccionado
+            } else {
+                editarButton.setDisable(false); // Habilitar el botón Editar si solo hay un elemento seleccionado
+            }
+        });
+
+        //Evitar la selección de rangos eliminando los seleccionados no deseados
+        tablaEmpresaTable.getSelectionModel().getSelectedItems().addListener((ListChangeListener<Empresa>) change -> {
+            while (change.next()) {
+                if (change.wasAdded() && change.getAddedSubList().size() > 1) {
+                    // Evitar la selección de rangos eliminando los seleccionados no deseados
+                    Empresa ultimoSeleccionado = change.getAddedSubList().get(change.getAddedSubList().size() - 1);
+                    tablaEmpresaTable.getSelectionModel().clearSelection();
+                    tablaEmpresaTable.getSelectionModel().select(ultimoSeleccionado);
+                }
+            }
+        });
 
     }
 
@@ -352,11 +376,6 @@ public class EmpresaController {
         return matcher.matches();
     }
 
-
-
-
-
-
     private void llenarCampos(Empresa empresa) {
         idEmpresaField.setText(Integer.toString(empresa.getIdEmpresa()));
         nombreEmpresaField.setText(empresa.getNombre());
@@ -364,11 +383,23 @@ public class EmpresaController {
         correoEmpresaField.setText(empresa.getCorreo());
         horarioEmpresaField.setText(empresa.getHorario());
         plazasField.setText(Integer.toString(empresa.getPlazasDisponibles()));
-        especialidadComboBox.setValue(Integer.toString(empresa.getEspecialidad()));
+        
+        String query = "SELECT ID_Especialidad, Nombre FROM Especialidad WHERE ID_Especialidad = " + empresa.getEspecialidad();
+
+        try(Connection connection = HikariCPConexion.getConnection();
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(query)) {
+
+            if (resultSet.next()) {
+                String especialidad = resultSet.getInt("ID_Especialidad") + " - " + resultSet.getString("Nombre");
+                especialidadComboBox.setValue(especialidad);
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error al cargar datos de la tabla Especialidad: " + e.getMessage());
+        }
 
     }
-
-
 
     private void cargarDatos() {
         String query = "SELECT * FROM Empresa";
